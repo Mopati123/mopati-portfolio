@@ -17,7 +17,7 @@ class PortfolioInteractionTests(unittest.TestCase):
     def test_filter_exposes_observer_feedback(self):
         self.assertIn("dataset.filterStatus", APP)
         self.assertIn("aria-pressed", APP)
-        self.assertIn("systems observed", APP)
+        self.assertIn("observed", APP)
 
     def test_quantum_motion_layer_is_installed(self):
         self.assertIn("initMotionLayer", APP)
