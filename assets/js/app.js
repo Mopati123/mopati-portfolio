@@ -14,6 +14,15 @@ const qsa = (selector, root = document) => [...root.querySelectorAll(selector)];
 const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
+function ensureStylesheet(href, dataKey) {
+  if (qs(`link[data-${dataKey}]`)) return;
+  const stylesheet = document.createElement('link');
+  stylesheet.rel = 'stylesheet';
+  stylesheet.href = href;
+  stylesheet.dataset[dataKey] = 'true';
+  document.head.appendChild(stylesheet);
+}
+
 function initHeader() {
   const header = qs('[data-header]');
   const toggle = qs('[data-nav-toggle]');
@@ -59,12 +68,15 @@ function initRoleRotator() {
 }
 
 function initMotionLayer() {
-  if (!qs('link[data-quantum-motion]')) {
-    const stylesheet = document.createElement('link');
-    stylesheet.rel = 'stylesheet';
-    stylesheet.href = 'assets/css/quantum-motion.css';
-    stylesheet.dataset.quantumMotion = 'true';
-    document.head.appendChild(stylesheet);
+  ensureStylesheet('assets/css/quantum-motion.css', 'quantumMotion');
+  ensureStylesheet('assets/css/cinematic-v4.css', 'cinematicV4');
+
+  if (!qs('[data-scroll-progress]')) {
+    const progress = document.createElement('div');
+    progress.className = 'scroll-progress';
+    progress.dataset.scrollProgress = 'true';
+    progress.setAttribute('aria-hidden', 'true');
+    document.body.prepend(progress);
   }
 
   if (!qs('[data-quantum-field]')) {
@@ -80,6 +92,16 @@ function initMotionLayer() {
       <div class="observer-field"></div>`;
     document.body.prepend(field);
   }
+}
+
+function initScrollProgress() {
+  const update = () => {
+    const total = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    document.documentElement.style.setProperty('--scroll-progress', String(Math.min(1, window.scrollY / total)));
+  };
+  window.addEventListener('scroll', update, {passive: true});
+  window.addEventListener('resize', update, {passive: true});
+  update();
 }
 
 function initQuantumField() {
@@ -142,6 +164,86 @@ function initHeroObserver() {
     visual.style.setProperty('--hero-rotate-y', '0deg');
     visual.style.setProperty('--hero-rotate-x', '0deg');
   });
+}
+
+function initMagneticControls() {
+  if (reducedMotion.matches) return;
+  qsa('.button, .nav-cta').forEach(control => {
+    control.addEventListener('pointermove', event => {
+      const rect = control.getBoundingClientRect();
+      const x = (event.clientX - rect.left) / rect.width - 0.5;
+      const y = (event.clientY - rect.top) / rect.height - 0.5;
+      control.style.setProperty('--magnetic-x', `${x * 8}px`);
+      control.style.setProperty('--magnetic-y', `${y * 6}px`);
+    });
+    control.addEventListener('pointerleave', () => {
+      control.style.setProperty('--magnetic-x', '0px');
+      control.style.setProperty('--magnetic-y', '0px');
+    });
+  });
+
+  document.addEventListener('pointerdown', event => {
+    const button = event.target.closest('.button');
+    if (!button) return;
+    const rect = button.getBoundingClientRect();
+    button.style.setProperty('--ripple-x', `${event.clientX - rect.left}px`);
+    button.style.setProperty('--ripple-y', `${event.clientY - rect.top}px`);
+    button.classList.remove('is-rippling');
+    void button.offsetWidth;
+    button.classList.add('is-rippling');
+    window.setTimeout(() => button.classList.remove('is-rippling'), 680);
+  });
+}
+
+function initSectionObserver() {
+  const sections = qsa('main > section[id], main > section.section-pad');
+  if (!('IntersectionObserver' in window)) {
+    sections.forEach(section => section.classList.add('section-observed'));
+    return;
+  }
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('section-observed');
+    });
+  }, {threshold: .08});
+  sections.forEach(section => observer.observe(section));
+}
+
+function initActiveNavigation() {
+  const header = qs('[data-header]');
+  const links = qsa('[data-nav] a[href^="#"]');
+  const sections = links
+    .map(link => ({link, section: qs(link.getAttribute('href'))}))
+    .filter(item => item.section);
+  if (!header || !sections.length) return;
+
+  const setActive = link => {
+    links.forEach(item => item.removeAttribute('aria-current'));
+    if (!link) {
+      header.style.setProperty('--active-opacity', '0');
+      return;
+    }
+    link.setAttribute('aria-current', 'true');
+    const headerRect = header.getBoundingClientRect();
+    const rect = link.getBoundingClientRect();
+    header.style.setProperty('--active-left', `${rect.left - headerRect.left}px`);
+    header.style.setProperty('--active-width', `${rect.width}px`);
+    header.style.setProperty('--active-opacity', '1');
+  };
+
+  const observer = new IntersectionObserver(entries => {
+    const visible = entries
+      .filter(entry => entry.isIntersecting)
+      .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+    if (!visible) return;
+    const match = sections.find(item => item.section === visible.target);
+    if (match) setActive(match.link);
+  }, {rootMargin: '-28% 0px -58%', threshold: [0, .2, .5]});
+  sections.forEach(item => observer.observe(item.section));
+  window.addEventListener('resize', () => {
+    const current = qs('[data-nav] a[aria-current="true"]');
+    if (current) setActive(current);
+  }, {passive: true});
 }
 
 function projectCard(project, index) {
@@ -215,7 +317,6 @@ function initProjects() {
   };
 
   let renderEpoch = 0;
-
   const render = (filter, initial = false) => {
     const epoch = ++renderEpoch;
     const selectedProjects = filter === 'all'
@@ -225,29 +326,32 @@ function initProjects() {
     const commit = () => {
       if (epoch !== renderEpoch) return;
       grid.innerHTML = selectedProjects.map(projectCard).join('');
+      grid.dataset.transition = 'enter';
       grid.classList.remove('is-switching');
       grid.removeAttribute('aria-busy');
 
       if (status) {
         const noun = selectedProjects.length === 1 ? 'system' : 'systems';
-        status.textContent = `${filterLabels[filter] || 'Selected systems'} · ${selectedProjects.length} ${noun} observed`;
+        status.innerHTML = `${escapeHtml(filterLabels[filter] || 'Selected systems')} · <strong>${selectedProjects.length}</strong> ${noun} observed`;
+        status.classList.remove('is-updating');
       }
 
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          qsa('[data-project-card]', grid).forEach(card => card.classList.add('is-visible'));
-        });
+        qsa('[data-project-card]', grid).forEach(card => card.classList.add('is-visible'));
+        window.setTimeout(() => delete grid.dataset.transition, 820);
       });
     };
 
     grid.setAttribute('aria-busy', 'true');
+    status?.classList.add('is-updating');
     if (initial || reducedMotion.matches || !grid.children.length) {
       commit();
       return;
     }
 
+    grid.dataset.transition = 'exit';
     grid.classList.add('is-switching');
-    window.setTimeout(commit, 180);
+    window.setTimeout(commit, 230);
   };
 
   qsa('[data-filter]').forEach(button => button.addEventListener('click', () => {
@@ -256,7 +360,10 @@ function initProjects() {
       const active = item === button;
       item.classList.toggle('active', active);
       item.setAttribute('aria-pressed', String(active));
+      item.classList.remove('is-collapsing');
     });
+    button.classList.add('is-collapsing');
+    window.setTimeout(() => button.classList.remove('is-collapsing'), 650);
     render(filter);
   }));
 
@@ -292,7 +399,21 @@ function openProject(project) {
       <section class="dialog-section"><h3>Current limitation</h3><p>${escapeHtml(project.boundary)}</p></section>
       ${project.repo ? `<a class="button primary" href="${project.repo}" target="_blank" rel="noreferrer">Open public repository</a>` : '<span class="status private">Private implementation · public architecture only</span>'}
     </article>`;
+  dialog.classList.remove('is-closing');
   dialog.showModal();
+}
+
+function closeDialogAnimated(dialog) {
+  if (!dialog.open) return;
+  if (reducedMotion.matches) {
+    dialog.close();
+    return;
+  }
+  dialog.classList.add('is-closing');
+  window.setTimeout(() => {
+    dialog.close();
+    dialog.classList.remove('is-closing');
+  }, 250);
 }
 
 function initDialog() {
@@ -300,11 +421,15 @@ function initDialog() {
   if (!dialog) return;
 
   const closeButton = qs('[data-dialog-close]', dialog);
-  closeButton?.addEventListener('click', () => dialog.close());
+  closeButton?.addEventListener('click', () => closeDialogAnimated(dialog));
+  dialog.addEventListener('cancel', event => {
+    event.preventDefault();
+    closeDialogAnimated(dialog);
+  });
   dialog.addEventListener('click', event => {
     const rect = dialog.getBoundingClientRect();
     const outside = event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom;
-    if (outside) dialog.close();
+    if (outside) closeDialogAnimated(dialog);
   });
 }
 
@@ -359,8 +484,12 @@ document.addEventListener('DOMContentLoaded', () => {
   initHeader();
   initRoleRotator();
   initMotionLayer();
+  initScrollProgress();
   initQuantumField();
   initHeroObserver();
+  initMagneticControls();
+  initSectionObserver();
+  initActiveNavigation();
   initProjects();
   initDialog();
   initReveal();
