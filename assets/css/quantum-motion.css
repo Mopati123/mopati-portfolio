@@ -1,0 +1,258 @@
+:root {
+  --observer-x: 50vw;
+  --observer-y: 28vh;
+  --observer-nx: 0;
+  --observer-ny: 0;
+}
+
+body { position: relative; overflow-x: hidden; }
+main, .site-header, .site-footer { position: relative; z-index: 2; }
+
+.quantum-field {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: .86;
+}
+.quantum-mesh {
+  position: absolute;
+  inset: -20%;
+  background-image:
+    linear-gradient(rgba(114,230,255,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(114,230,255,.035) 1px, transparent 1px);
+  background-size: 54px 54px;
+  transform: perspective(700px) rotateX(62deg)
+    translate3d(calc(var(--observer-nx) * -18px), calc(var(--observer-ny) * -12px), 0);
+  transform-origin: 50% 25%;
+  mask-image: radial-gradient(circle at 50% 28%, black, transparent 72%);
+  transition: transform .5s ease-out;
+}
+.quantum-wave {
+  position: absolute;
+  width: 54vw;
+  aspect-ratio: 1;
+  border: 1px solid rgba(114,230,255,.1);
+  border-radius: 44% 56% 61% 39% / 51% 43% 57% 49%;
+}
+.wave-alpha {
+  top: -25vw;
+  right: -14vw;
+  animation: quantum-wave-spin 34s linear infinite;
+  box-shadow: 0 0 90px rgba(114,230,255,.05), inset 0 0 90px rgba(180,140,255,.04);
+}
+.wave-beta {
+  bottom: -31vw;
+  left: -18vw;
+  animation: quantum-wave-spin 47s linear infinite reverse;
+  border-color: rgba(180,140,255,.1);
+}
+.observer-field {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    440px circle at var(--observer-x) var(--observer-y),
+    rgba(114,230,255,.085),
+    rgba(180,140,255,.025) 37%,
+    transparent 70%
+  );
+  mix-blend-mode: screen;
+}
+.quantum-particles span {
+  position: absolute;
+  left: var(--particle-x);
+  top: var(--particle-y);
+  width: var(--particle-size);
+  height: var(--particle-size);
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(114,230,255,.8), 0 0 22px rgba(180,140,255,.35);
+  opacity: .28;
+  animation: quantum-drift var(--particle-duration) ease-in-out var(--particle-delay) infinite alternate;
+}
+@keyframes quantum-drift {
+  0% { transform: translate3d(-8px,14px,0) scale(.65); opacity: .12; }
+  50% { opacity: .65; }
+  100% { transform: translate3d(18px,-28px,0) scale(1.2); opacity: .22; }
+}
+@keyframes quantum-wave-spin { to { transform: rotate(360deg); } }
+
+.hero-visual {
+  --hero-rotate-x: 0deg;
+  --hero-rotate-y: 0deg;
+  transform: perspective(1100px) rotateX(var(--hero-rotate-x)) rotateY(var(--hero-rotate-y));
+  transform-style: preserve-3d;
+  transition: transform .28s ease-out;
+}
+.collapse-core {
+  animation: core-breathe 4.8s ease-in-out infinite;
+  transform: translateZ(42px);
+}
+.state-node {
+  transition: transform .3s ease, border-color .3s ease, box-shadow .3s ease;
+  animation: node-coherence 3.8s ease-in-out infinite;
+}
+.state-node:nth-of-type(2) { animation-delay: -.8s; }
+.state-node:nth-of-type(3) { animation-delay: -1.6s; }
+.state-node:nth-of-type(4) { animation-delay: -2.4s; }
+.hero-visual:hover .state-node {
+  border-color: rgba(114,230,255,.62);
+  box-shadow: 0 0 28px rgba(114,230,255,.16), var(--shadow);
+}
+@keyframes core-breathe {
+  0%,100% { box-shadow: 0 0 65px rgba(114,230,255,.12), inset 0 0 30px rgba(180,140,255,.14); }
+  50% { box-shadow: 0 0 105px rgba(114,230,255,.23), inset 0 0 42px rgba(180,140,255,.22); }
+}
+@keyframes node-coherence {
+  0%,100% { transform: translateZ(18px) scale(1); }
+  50% { transform: translateZ(18px) scale(1.055); }
+}
+
+.pipeline li {
+  position: relative;
+  overflow: hidden;
+  transition: transform .25s ease, border-color .25s ease, background .25s ease;
+}
+.pipeline li::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 15%, rgba(114,230,255,.08), transparent 85%);
+  transform: translateX(-115%);
+  transition: transform .55s ease;
+}
+.pipeline li:hover {
+  transform: translateX(7px);
+  border-color: rgba(114,230,255,.4);
+  background: rgba(114,230,255,.045);
+}
+.pipeline li:hover::after { transform: translateX(115%); }
+.hamiltonian-grid article {
+  position: relative;
+  overflow: hidden;
+  transition: transform .3s ease, border-color .3s ease, background .3s ease, box-shadow .3s ease;
+}
+.hamiltonian-grid article::after {
+  content: "";
+  position: absolute;
+  width: 110px;
+  height: 110px;
+  right: -48px;
+  top: -48px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(114,230,255,.14), transparent 67%);
+  transition: transform .4s ease, opacity .4s ease;
+  opacity: .55;
+}
+.hamiltonian-grid article:hover {
+  transform: translateY(-7px);
+  border-color: rgba(114,230,255,.38);
+  background: rgba(114,230,255,.035);
+  box-shadow: 0 22px 55px rgba(0,0,0,.2);
+}
+.hamiltonian-grid article:hover::after { transform: scale(1.45); opacity: 1; }
+
+.filter { position: relative; overflow: hidden; transition: color .22s ease, background .22s ease, border-color .22s ease, transform .22s ease, box-shadow .22s ease; }
+.filter::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent, rgba(255,255,255,.28), transparent);
+  transform: translateX(-130%);
+  transition: transform .45s ease;
+}
+.filter:hover { transform: translateY(-2px); border-color: rgba(114,230,255,.4); color: var(--text); }
+.filter:hover::before { transform: translateX(130%); }
+.filter.active { box-shadow: 0 0 0 4px rgba(114,230,255,.08), 0 0 30px rgba(114,230,255,.16); }
+.filter-status {
+  color: var(--muted);
+  min-height: 1.5em;
+  margin: -15px 0 25px;
+  font-size: .84rem;
+  letter-spacing: .02em;
+}
+.filter-status::before { content: "ψ"; color: var(--accent); margin-right: 8px; font-weight: 900; }
+.project-grid { transition: opacity .18s ease, transform .18s ease, filter .18s ease; }
+.project-grid.is-switching { opacity: 0; transform: translateY(10px) scale(.992); filter: blur(5px); }
+.project-card {
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  --card-lift: 0px;
+  --enter-y: 22px;
+  --card-light-x: 50%;
+  --card-light-y: 18%;
+  position: relative;
+  isolation: isolate;
+  border-color: transparent;
+  opacity: 0;
+  transform: perspective(1100px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y))
+    translateY(calc(var(--card-lift) + var(--enter-y))) scale(.985);
+  transform-style: preserve-3d;
+  box-shadow: 0 0 0 1px var(--line), 0 24px 60px rgba(0,0,0,.18);
+  transition:
+    opacity .55s ease calc(var(--card-index) * 55ms),
+    transform .55s cubic-bezier(.2,.8,.2,1) calc(var(--card-index) * 55ms),
+    border-color .25s ease,
+    box-shadow .25s ease;
+}
+.project-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(330px circle at var(--card-light-x) var(--card-light-y), var(--project-glow), transparent 58%);
+  opacity: .35;
+  transition: opacity .3s ease;
+  pointer-events: none;
+}
+.project-card::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), var(--accent-2), transparent);
+  transform: scaleX(.25);
+  opacity: .45;
+  transition: transform .35s ease, opacity .35s ease;
+  pointer-events: none;
+}
+.project-card.is-visible {
+  --enter-y: 0px;
+  opacity: 1;
+  transform: perspective(1100px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y))
+    translateY(calc(var(--card-lift) + var(--enter-y))) scale(1);
+}
+.project-card:hover {
+  --card-lift: -7px;
+  border-color: transparent;
+  box-shadow: 0 0 0 1px rgba(114,230,255,.38), 0 32px 75px rgba(0,0,0,.28), 0 0 38px var(--project-glow);
+}
+.project-card:hover::before { opacity: .72; }
+.project-card:hover::after { transform: scaleX(1); opacity: .9; }
+.project-card-top, .project-card-body { transform: translateZ(18px); }
+.card-link { transition: color .2s ease, text-shadow .2s ease, transform .2s ease; }
+.card-link:not(.disabled):hover { color: #c6f6ff; text-shadow: 0 0 18px rgba(114,230,255,.45); transform: translateX(2px); }
+.project-dialog[open] { animation: dialog-collapse-in .34s cubic-bezier(.16,1,.3,1); }
+.project-dialog::backdrop { animation: backdrop-observe .3s ease; }
+@keyframes dialog-collapse-in {
+  from { opacity: 0; transform: translateY(22px) scale(.96); filter: blur(8px); }
+  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+@keyframes backdrop-observe { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .quantum-wave, .quantum-particles span, .collapse-core, .state-node { animation: none !important; }
+  .hero-visual, .project-card, .project-card.is-visible { transform: none !important; }
+  .project-card { opacity: 1 !important; }
+  .project-grid.is-switching { opacity: 1; transform: none; filter: none; }
+}
+
+@media (max-width: 720px) {
+  .quantum-field { opacity: .52; }
+  .quantum-mesh { background-size: 42px 42px; }
+  .project-card-top, .project-card-body { transform: none; }
+}
