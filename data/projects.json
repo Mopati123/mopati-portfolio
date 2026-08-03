@@ -1,0 +1,6 @@
+{
+  "schema_version": "1.0",
+  "source": "assets/js/projects-data.js",
+  "note": "The JavaScript file is the runtime source. This manifest documents the required evidence fields.",
+  "required_fields": ["id", "title", "category", "summary", "status", "validation", "problem", "system", "authority", "evidence", "boundary"]
+}
